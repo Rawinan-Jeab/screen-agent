@@ -1,0 +1,4 @@
+# The core package, tests and run_experiment.py use only the Python standard library.
+# The UI (app.py) needs:
+streamlit
+pandas

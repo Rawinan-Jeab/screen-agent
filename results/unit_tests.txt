@@ -1,0 +1,28 @@
+test_chain_and_tamper (tests.test_agents.TestAuditLog.test_chain_and_tamper) ... ok
+test_keyword (tests.test_agents.TestBaseline.test_keyword) ... ok
+test_agreement_keeps_exclusion (tests.test_agents.TestCritic.test_agreement_keeps_exclusion) ... ok
+test_disagreement_on_failing_criterion_routes_to_human (tests.test_agents.TestCritic.test_disagreement_on_failing_criterion_routes_to_human) ... ok
+test_dispute_of_include (tests.test_agents.TestCritic.test_dispute_of_include) ... ok
+test_prompt_contains_screener_verdicts (tests.test_agents.TestCritic.test_prompt_contains_screener_verdicts) ... ok
+test_flags_all_payloads (tests.test_agents.TestInputGuard.test_flags_all_payloads) ... ok
+test_no_false_positive_on_clean (tests.test_agents.TestInputGuard.test_no_false_positive_on_clean) ... ok
+test_episodic_only_human_writes (tests.test_agents.TestMemory.test_episodic_only_human_writes) ... ok
+test_procedural_freeze (tests.test_agents.TestMemory.test_procedural_freeze) ... ok
+test_retrieval_only_dev (tests.test_agents.TestMemory.test_retrieval_only_dev) ... ok
+test_semantic_rejects_test_examples (tests.test_agents.TestMemory.test_semantic_rejects_test_examples) ... ok
+test_export_with_approval (tests.test_agents.TestPermissionGate.test_export_with_approval) ... ok
+test_injected_actions_blocked_end_to_end (tests.test_agents.TestPermissionGate.test_injected_actions_blocked_end_to_end) ... ok
+test_tiers (tests.test_agents.TestPermissionGate.test_tiers) ... ok
+test_without_gate_attack_lands (tests.test_agents.TestPermissionGate.test_without_gate_attack_lands) ... ok
+test_no_memory_skips_retrieval (tests.test_agents.TestScreener.test_no_memory_skips_retrieval) ... ok
+test_prompt_wraps_untrusted_text_and_has_examples (tests.test_agents.TestScreener.test_prompt_wraps_untrusted_text_and_has_examples) ... ok
+test_react_order_and_blackboard (tests.test_agents.TestScreener.test_react_order_and_blackboard) ... ok
+test_include_and_record (tests.test_agents.TestSupervisor.test_include_and_record) ... ok
+test_low_confidence_exclusion_goes_to_human (tests.test_agents.TestSupervisor.test_low_confidence_exclusion_goes_to_human) ... ok
+test_step_budget (tests.test_agents.TestSupervisor.test_step_budget) ... ok
+test_working_memory_cleared (tests.test_agents.TestSupervisor.test_working_memory_cleared) ... ok
+
+----------------------------------------------------------------------
+Ran 23 tests in 0.027s
+
+OK
