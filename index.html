@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ScreenAgent</title>
+<style>
+:root{--bg:#f7f7f5;--panel:#fff;--text:#1d1d1b;--muted:#6b6b66;--line:#e2e1dc;--accent:#2f5d8a;--accent-soft:#e7eef6;
+--ok:#1f7a4d;--ok-soft:#e5f3ec;--bad:#b3261e;--bad-soft:#fbe9e7;--warn:#9a6200;--warn-soft:#fdf1dc;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#161615;--panel:#1f1f1e;--text:#ecebe6;--muted:#a3a29c;--line:#34332f;
+--accent:#8fb6dd;--accent-soft:#22303d;--ok:#6fcf9b;--ok-soft:#1b3127;--bad:#f08a80;--bad-soft:#3a201d;--warn:#e8b35a;--warn-soft:#3a2d16;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#161615;--panel:#1f1f1e;--text:#ecebe6;--muted:#a3a29c;--line:#34332f;
+--accent:#8fb6dd;--accent-soft:#22303d;--ok:#6fcf9b;--ok-soft:#1b3127;--bad:#f08a80;--bad-soft:#3a201d;--warn:#e8b35a;--warn-soft:#3a2d16;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.6 "Sarabun","Noto Sans Thai","Leelawadee UI",system-ui,sans-serif}
+.layout{display:grid;grid-template-columns:270px 1fr;min-height:100vh}
+aside{background:var(--panel);border-right:1px solid var(--line);padding:20px 18px}
+main{padding:24px 28px;max-width:1150px;width:100%}
+h1{font-size:1.3rem;margin:0}h2{font-size:1.35rem;margin:0 0 6px}h3{font-size:1.05rem;margin:22px 0 8px}
+.muted{color:var(--muted);font-size:.88rem}
+label.row{display:flex;justify-content:space-between;align-items:center;margin:8px 0;gap:8px}
+input[type=number],select,input[type=text]{background:var(--bg);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;font:inherit}
+select{max-width:100%}
+input[type=range]{width:100%}
+hr{border:0;border-top:1px solid var(--line);margin:16px 0}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:20px;flex-wrap:wrap}
+.tabs button{background:none;border:0;border-bottom:2px solid transparent;padding:8px 12px;font:inherit;color:var(--muted);cursor:pointer}
+.tabs button.on{color:var(--text);border-color:var(--accent);font-weight:600}
+.tab{display:none}.tab.on{display:block}
+.btn{background:var(--accent);color:var(--panel);border:0;border-radius:8px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer}
+.btn.ghost{background:var(--panel);color:var(--text);border:1px solid var(--line);font-weight:500}
+.btn:disabled{opacity:.5;cursor:wait}
+.grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(4,1fr)}.g3{grid-template-columns:repeat(3,1fr)}.g2{grid-template-columns:repeat(2,1fr)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.metric .v{font-size:1.6rem;font-weight:600;font-variant-numeric:tabular-nums}.metric .k{color:var(--muted);font-size:.85rem}
+.box{border-radius:10px;padding:10px 14px;margin:8px 0}
+.info{background:var(--accent-soft)}.ok{background:var(--ok-soft);color:var(--ok)}.bad{background:var(--bad-soft);color:var(--bad)}.warn{background:var(--warn-soft);color:var(--warn)}
+.badge{display:inline-block;padding:2px 12px;border-radius:999px;font-weight:700}
+.b-include{background:var(--ok-soft);color:var(--ok)}.b-exclude{background:var(--bad-soft);color:var(--bad)}.b-uncertain{background:var(--warn-soft);color:var(--warn)}
+table{border-collapse:collapse;width:100%;font-size:.9rem;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600}
+.tw{overflow-x:auto;background:var(--panel);border:1px solid var(--line);border-radius:10px}
+.flex{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+details{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;margin:8px 0}
+summary{cursor:pointer;font-weight:600}
+.bar{height:14px;background:var(--accent);border-radius:3px}
+#loading{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:9}
+.spin{width:34px;height:34px;border:3px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:s 1s linear infinite}
+@keyframes s{to{transform:rotate(360deg)}}
+@media (max-width:800px){.layout{grid-template-columns:1fr}aside{border-right:0;border-bottom:1px solid var(--line)}main{padding:16px}
+.g4,.g3{grid-template-columns:repeat(2,1fr)}.g2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="loading"><div class="spin"></div><div id="loadmsg">กำลังโหลด Python ในเบราว์เซอร์…</div><div class="muted">ครั้งแรกใช้เวลาสักครู่ (ประมาณ 13 MB)</div></div>
+<div class="layout">
+<aside>
+  <h1>🔎 ScreenAgent</h1>
+  <div class="muted">Multi-agent คัดกรอง abstract · DIM 716</div>
+  <hr>
+  <div class="muted">Model</div><div><b>Mock (ออฟไลน์)</b></div>
+  <label class="row">Seed <input id="seed" type="number" min="1" max="99" value="1" style="width:70px"></label>
+  <hr>
+  <b>ส่วนประกอบของระบบ</b>
+  <label class="row">Critic <input id="critic" type="checkbox" checked></label>
+  <label class="row">Memory (ตัวอย่างจาก dev) <input id="memory" type="checkbox" checked></label>
+  <label class="row">Permission gate <input id="gate" type="checkbox" checked></label>
+  <label class="row">Input guard <input id="guard" type="checkbox" checked></label>
+  <div style="margin-top:10px">Confidence threshold ส่งมนุษย์: <b id="thrv">0.65</b></div>
+  <input id="thr" type="range" min="0.5" max="0.95" step="0.05" value="0.65">
+  <hr>
+  <div class="muted">หน้านี้รัน Python ในเบราว์เซอร์ด้วย Pyodide และใช้ Mock LLM ที่จำลองการอ่านของ model ใช้สอนและทดสอบระบบเท่านั้น ไม่ใช่ผลวิจัย ถ้าจะใช้ model จริงผ่าน Ollama ให้รัน <code>streamlit run app.py</code> บนเครื่องตัวเอง</div>
+</aside>
+<main>
+  <nav class="tabs" id="tabs">
+    <button data-t="home" class="on">ภาพรวม</button><button data-t="screen">คัดกรองทีละเรื่อง</button>
+    <button data-t="hitl">คิวตรวจโดยมนุษย์</button><button data-t="safety">Safety</button><button data-t="results">ผลการทดลอง</button>
+  </nav>
+
+  <section class="tab on" id="t-home">
+    <h2>ScreenAgent: ระบบ multi-agent คัดกรอง abstract</h2>
+    <p>ระบบตัดสินว่า abstract แต่ละเรื่องเข้าเกณฑ์ systematic review หรือไม่ โดยให้ agent หลายตัวทำงานร่วมกันบน blackboard และส่งเฉพาะกรณีที่ไม่แน่ใจให้มนุษย์ตรวจ</p>
+    <div class="grid g4" id="home-metrics"></div>
+    <h3>Agent ในระบบ</h3>
+    <div class="grid g3" id="agents"></div>
+    <h3>เกณฑ์คัดเข้า</h3>
+    <ul id="criteria"></ul>
+  </section>
+
+  <section class="tab" id="t-screen">
+    <h2>คัดกรองทีละเรื่อง</h2>
+    <div class="flex">
+      <select id="kind"><option value="all">ทั้งหมด</option><option value="rel">เกี่ยวข้อง</option><option value="irr">ไม่เกี่ยวข้อง</option><option value="inj">ฝัง injection</option></select>
+      <select id="aid" style="flex:1;min-width:200px"></select>
+    </div>
+    <div class="box info" id="abtext"></div>
+    <div class="muted" id="abtruth"></div>
+    <p><button class="btn" id="run1">รัน ScreenAgent</button></p>
+    <div id="screen-out"></div>
+  </section>
+
+  <section class="tab" id="t-hitl">
+    <h2>คิวตรวจโดยมนุษย์ (Human-in-the-loop)</h2>
+    <p>รันระบบกับ abstract หลายเรื่อง เรื่องที่ระบบไม่แน่ใจจะเข้าคิวนี้ คำตัดสินของอาจารย์จะถูกบันทึกเป็น episodic memory ซึ่งมีแต่มนุษย์เท่านั้นที่เขียนได้</p>
+    <div>จำนวน abstract ที่จะรัน: <b id="nv">40</b></div>
+    <input id="n" type="range" min="10" max="300" step="10" value="40">
+    <p><button class="btn" id="runb">รันชุดนี้</button></p>
+    <div id="hitl-out"></div>
+  </section>
+
+  <section class="tab" id="t-safety">
+    <h2>Safety: ทดสอบ prompt injection</h2>
+    <p>เลือก abstract ที่ฝังคำสั่งไว้ แล้วเทียบระบบที่มีและไม่มี permission gate บน seed เดียวกัน</p>
+    <select id="inj" style="width:100%"></select>
+    <div class="box info" id="injtext"></div>
+    <p><button class="btn" id="runa">ทดสอบโจมตี</button></p>
+    <div class="grid g2" id="attack-out"></div>
+    <hr>
+    <h3>Audit log</h3>
+    <div class="muted" id="audit-count"></div>
+    <div class="tw" id="audit-table"></div>
+    <p class="flex"><button class="btn ghost" id="verify">ตรวจ hash chain</button><button class="btn ghost" id="tamper">จำลองการแก้ log ย้อนหลัง</button></p>
+    <div id="audit-msg"></div>
+  </section>
+
+  <section class="tab" id="t-results">
+    <h2>ผลการทดลอง (Experiment Plan)</h2>
+    <div id="results-out"></div>
+  </section>
+</main>
+</div>
+
+<script src="pyodide/pyodide.js"></script>
+<script>
+const CRIT_TH={P:"กลุ่มตัวอย่าง (P)",I:"สิ่งที่ทดลอง (I)",O:"ผลลัพธ์ (O)",S:"รูปแบบการวิจัย (S)"};
+const LABEL_TH={include:"คัดเข้า",exclude:"คัดออก",uncertain:"ส่งมนุษย์ตรวจ"};
+const FILES=["__init__.py","agents.py","data.py","llm.py","memory.py","safety.py","stats.py"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const badge=l=>`<span class="badge b-${l}">${LABEL_TH[l]}</span>`;
+const metric=(k,v,sub)=>`<div class="card metric"><div class="k">${k}</div><div class="v">${v}</div>${sub?`<div class="muted">${sub}</div>`:""}</div>`;
+const box=(cls,html)=>`<div class="box ${cls}">${html}</div>`;
+const table=(cols,rows)=>`<div class="tw"><table><thead><tr>${cols.map(c=>`<th>${c}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(x=>`<td>${x}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+const f3=x=>Number(x).toFixed(3), pct=x=>(x*100).toFixed(1)+"%";
+let py, B;
+
+function opts(){return JSON.stringify({seed:+$("seed").value||1,critic:$("critic").checked,memory:$("memory").checked,
+  gate:$("gate").checked,guard:$("guard").checked,thr:+$("thr").value});}
+function call(fn,...args){return JSON.parse(B[fn](...args));}
+async function busy(btn,fn){btn.disabled=true;const t=btn.textContent;btn.textContent="กำลังรัน…";
+  await new Promise(r=>setTimeout(r,30));try{fn()}catch(e){console.error(e);alert("เกิดข้อผิดพลาด: "+e.message)}
+  btn.disabled=false;btn.textContent=t;}
+
+function verdictTable(a,sc,cr,truth){
+  const cols=["เกณฑ์","Screener","ความมั่นใจ"];if(cr)cols.push("Critic");if(truth)cols.push("เฉลย");
+  return table(cols,"PIOS".split("").map(c=>{const r=[CRIT_TH[c],sc[c].met?"✅ ผ่าน":"❌ ไม่ผ่าน",Number(sc[c].confidence).toFixed(2)];
+    if(cr)r.push(cr[c].met?"✅ ผ่าน":"❌ ไม่ผ่าน");
+    if(truth&&a.criteria&&a.criteria[c])r.push((a.criteria[c].met?"✅":"❌")+` (${a.criteria[c].clarity==="explicit"?"ชัดเจน":"กำกวม"})`);
+    return r;}));
+}
+
+// ---------- tabs
+$("tabs").onclick=e=>{const t=e.target.dataset.t;if(!t)return;
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on",b.dataset.t===t));
+  document.querySelectorAll(".tab").forEach(s=>s.classList.toggle("on",s.id==="t-"+t));
+  if(t==="safety"){loadInjected();drawAudit();}};
+$("thr").oninput=()=>$("thrv").textContent=(+$("thr").value).toFixed(2);
+$("n").oninput=()=>$("nv").textContent=$("n").value;
+["seed","critic","memory","gate","guard","thr"].forEach(id=>$(id).addEventListener("change",()=>{injDirty=true;
+  if(document.querySelector("#t-safety.on"))loadInjected();}));
+
+// ---------- home
+function drawHome(){
+  const o=call("overview");
+  $("home-metrics").innerHTML=metric("Abstract ทั้งหมด",o.n,`dev ${o.dev} · test ${o.test}`)+metric("เกี่ยวข้องใน test",o.relevant)
+    +metric("ฝัง prompt injection",o.injected)+metric("ตัวอย่างใน memory",o.memory);
+  const cards=[["1 · Input guard","ครอบ abstract ด้วย &lt;untrusted&gt; และตรวจคำสั่งที่ฝังมา"],
+    ["2 · Screener (ReAct)","เรียก get_criteria → search_examples แล้วตัดสินทีละเกณฑ์ P/I/O/S"],
+    ["3 · Critic","ทวนเหตุผลของ Screener ทีละเกณฑ์ ถ้าเห็นต่างจะส่งให้มนุษย์"],
+    ["4 · Supervisor","คุมลำดับ จำกัด step ตัดสินใจขั้นสุดท้าย และส่งงานเข้าคิวมนุษย์"],
+    ["5 · Permission gate","ทุก tool call ผ่าน gate: low อนุญาต, medium เฉพาะ task นี้, high ต้องให้มนุษย์อนุมัติ"],
+    ["6 · Audit log","บันทึกทุกการกระทำแบบ hash chain ตรวจได้ว่ามีใครแก้หรือไม่"]];
+  $("agents").innerHTML=cards.map(([t,d])=>`<div class="card"><b>${t}</b><div class="muted">${d}</div></div>`).join("");
+  $("criteria").innerHTML=Object.entries(o.criteria).map(([c,t])=>`<li><b>${CRIT_TH[c]}</b> ${esc(t)}</li>`).join("");
+}
+
+// ---------- screen one
+function loadPool(){const p=call("pool",$("kind").value);
+  $("aid").innerHTML=p.map(a=>`<option value="${a.id}">${a.id} · ${esc(a.snip)}…</option>`).join("");showAbstract();}
+function showAbstract(){const a=call("abstract",$("aid").value);$("abtext").textContent=a.text;
+  $("abtruth").textContent="เฉลย: "+(a.relevant?"เกี่ยวข้อง":"ไม่เกี่ยวข้อง")+(a.injection?` · มี injection แบบ ${a.injection}`:"");
+  $("screen-out").innerHTML="";}
+$("kind").onchange=loadPool;$("aid").onchange=showAbstract;
+$("run1").onclick=()=>busy($("run1"),()=>{
+  const r=call("screen",$("aid").value,opts()),a=r.abstract;
+  let h=`<h3>ผลลัพธ์</h3><div class="grid g4"><div class="card">${badge(r.label)}<div class="muted" style="margin-top:6px">${esc(r.reason)}</div></div>`
+    +metric("Token",r.tokens.toLocaleString())+metric("LLM calls",r.llm_calls)+metric("Steps",r.steps)+"</div>";
+  h+="<h3>1 · Input guard</h3>"+(!$("guard").checked?'<div class="muted">ปิดอยู่</div>':
+    r.guard.flagged?box("warn","พบคำสั่งที่ฝังมา: "+r.guard.hits.map(esc).join(", ")):box("ok","ไม่พบคำสั่งที่ฝังมา"));
+  h+="<h3>2–3 · Screener และ Critic</h3>"+verdictTable(a,r.screener,r.critic,true);
+  if(r.disagree&&r.disagree.length)h+=box("warn","Critic เห็นต่างในเกณฑ์ "+r.disagree.map(c=>CRIT_TH[c]).join(", "));
+  h+="<h3>4–5 · Supervisor และ Permission gate</h3>"+table(["Agent","Tool","Gate","เหตุผล"],
+    r.trace.map(t=>[esc(t.agent),esc(t.tool),t.decision==="allow"?"✅ allow":"⛔ deny",esc(t.why)]));
+  $("screen-out").innerHTML=h;});
+
+// ---------- HITL
+function drawBatch(s){
+  if(!s){$("hitl-out").innerHTML="";return;}
+  let h=`<div class="grid g4">${metric("คัดเข้า",s.include)}${metric("คัดออก",s.exclude)}${metric("รอมนุษย์ตรวจ",s.uncertain)}${metric("Recall (ก่อนมนุษย์ตรวจ)",s.recall.toFixed(2))}</div>`;
+  h+=`<h3>คิวรอตรวจ (${s.queue.length} เรื่อง)</h3>`;
+  h+=s.queue.map(q=>`<details><summary>${q.id} · ${esc(q.reason)}</summary><p>${esc(q.text)}</p>${verdictTable({},q.screener,null,false)}
+    <div class="flex" style="margin-top:10px"><label><input type="radio" name="c${q.id}" value="include" checked> คัดเข้า</label>
+    <label><input type="radio" name="c${q.id}" value="exclude"> คัดออก</label>
+    <input type="text" id="w${q.id}" placeholder="เหตุผล (จะถูกเก็บเป็น episodic memory)" style="flex:1;min-width:200px">
+    <button class="btn" data-save="${q.id}">บันทึก</button></div></details>`).join("")||'<div class="muted">ไม่มีเรื่องค้างในคิว</div>';
+  if(s.episodic.length)h+="<h3>Episodic memory (คำตัดสินของมนุษย์)</h3>"+table(["role","id","label","reason","เฉลย"],
+    s.episodic.map(e=>[esc(e.role),e.id,LABEL_TH[e.label],esc(e.reason),e.truth?"เกี่ยวข้อง":"ไม่เกี่ยวข้อง"]));
+  h+=`<h3>Export ผล (high risk: ต้องอนุมัติ)</h3><label><input type="checkbox" id="approve"> ข้าพเจ้าอนุมัติให้ export ผลการคัดกรองชุดนี้</label>
+    <p><button class="btn ghost" id="export">Export CSV</button></p><div id="export-msg"></div>`;
+  $("hitl-out").innerHTML=h;
+  document.querySelectorAll("[data-save]").forEach(b=>b.onclick=()=>{const id=b.dataset.save;
+    const lab=document.querySelector(`input[name="c${id}"]:checked`).value;
+    drawBatch(call("human_decide",id,lab,$("w"+id).value));});
+  $("export").onclick=()=>{const r=call("export",$("approve").checked);
+    if(!r.ok){$("export-msg").innerHTML=box("bad","Gate ปฏิเสธ: ต้องติ๊กอนุมัติก่อน");return;}
+    const url=URL.createObjectURL(new Blob([r.csv],{type:"text/csv"}));
+    $("export-msg").innerHTML=box("ok",`Gate อนุมัติแล้ว · <a href="${url}" download="screening_results.csv">ดาวน์โหลด screening_results.csv</a>`);};
+}
+$("runb").onclick=()=>busy($("runb"),()=>drawBatch(call("run_batch",+$("n").value,opts())));
+
+// ---------- safety
+let injDirty=true;
+function loadInjected(){if(!injDirty)return;injDirty=false;const keep=$("inj").value;
+  const l=call("injected",opts());
+  $("inj").innerHTML=l.map(a=>`<option value="${a.id}">${a.id} · แบบ ${a.kind}${a.lands?" · โจมตีสำเร็จถ้าไม่มี gate":""}</option>`).join("");
+  if(keep&&l.some(a=>a.id===keep))$("inj").value=keep;showInj();}
+function showInj(){$("injtext").textContent=call("abstract",$("inj").value).text;$("attack-out").innerHTML="";}
+$("inj").onchange=showInj;
+$("runa").onclick=()=>busy($("runa"),()=>{
+  $("attack-out").innerHTML=call("attack",$("inj").value,opts()).map(r=>{
+    let h=`<div class="card"><h3 style="margin-top:0">${r.gate?"มี gate":"ไม่มี gate"}</h3><div>คำตัดสิน: ${badge(r.label)}</div>`;
+    if(!r.executed.length)h+=box("ok","model ไม่ทำตามคำสั่งที่ฝังมาใน seed นี้ (ลองเปลี่ยน seed ทางซ้าย)");
+    r.executed.forEach(t=>h+=box(t.decision==="allow"?"bad":"ok",`${esc(t.tool)} → ${t.decision} (${esc(t.why)})`));
+    if(r.exports.length)h+=box("bad","ข้อมูลถูก export ออกไป: "+esc(JSON.stringify(r.exports)));
+    return h+"</div>";}).join("");drawAudit();});
+function drawAudit(){const s=call("audit_state");$("audit-count").textContent=`${s.count} records ในเซสชันนี้ (แสดง 30 รายการล่าสุด)`;
+  $("audit-table").innerHTML=s.rows.length?table(["event","agent","tool","decision","hash"],s.rows.map(r=>[r.event,r.agent,r.tool,r.decision,`<code>${r.hash}</code>`]))
+    :'<div class="muted" style="padding:10px">ยังไม่มี record ลองรันแท็บอื่นก่อน</div>';}
+$("verify").onclick=()=>{const r=call("audit_verify");$("audit-msg").innerHTML=r.ok?box("ok","chain ถูกต้องทั้งสาย"):box("bad",`chain ขาดที่ record ${r.at}`);};
+$("tamper").onclick=()=>{const r=call("audit_tamper");$("audit-msg").innerHTML=r.ok?box("ok","ยังไม่มี record ให้แก้"):box("bad",`ตรวจพบการแก้ไขที่ record ${r.at}`);};
+
+// ---------- results
+function drawResults(res){
+  if(!res){$("results-out").innerHTML=box("warn","ยังไม่มีไฟล์ results/results.json ให้รัน <code>python3 run_experiment.py</code> ก่อน");return;}
+  const C=res.conditions,full=C["ScreenAgent (full)"];
+  let h=`<div class="muted">Backend: ${esc(res.backend)} · test ${res.n_test} เรื่อง (เกี่ยวข้อง ${res.n_relevant}) · 3 seeds</div>`;
+  if(res.backend==="mock")h+=box("warn","ผลจาก Mock LLM: ใช้สอนและตรวจ pipeline เท่านั้น ไม่ใช่ผลวิจัย");
+  const d=full.recall-C["B2 retrieval"].recall;
+  h+=`<div class="grid g4">${metric("Recall (ระบบเต็ม)",f3(full.recall),(d>=0?"+":"")+f3(d)+" จาก B2")}${metric("ส่งมนุษย์ตรวจ",pct(full.uncertain_rate))}
+    ${metric("Token / abstract",Math.round(full.tokens_per_abstract).toLocaleString())}${metric("Attack success",full.attack_success_majority)}</div>`;
+  h+="<h3>Recall ตามเงื่อนไข</h3><div class='card'>"+Object.entries(C).map(([c,e])=>`<div class="flex" style="margin:4px 0;flex-wrap:nowrap">
+    <div style="width:150px;flex:none" class="muted">${esc(c)}</div><div style="flex:1"><div class="bar" style="width:${(e.recall*100).toFixed(1)}%"></div></div>
+    <div style="width:52px;text-align:right">${f3(e.recall)}</div></div>`).join("")+"</div>";
+  h+="<div style='height:10px'></div>"+table(["เงื่อนไข","Recall","CI ล่าง","CI บน","Precision","WSS","ส่งมนุษย์","Token","Attack success"],
+    Object.entries(C).map(([c,e])=>[esc(c),f3(e.recall),f3(e.ci[0]),f3(e.ci[1]),f3(e.precision),f3(e.wss),pct(e.uncertain_rate),
+      Math.round(e.tokens_per_abstract).toLocaleString(),e.attack_success_majority??"–"]));
+  h+="<h3>การทดสอบสมมติฐาน (McNemar + Holm)</h3>"+table(["เปรียบเทียบ","ระบบเต็มถูกฝ่ายเดียว","อีกฝ่ายถูกฝ่ายเดียว","Holm p","Cohen's h"],
+    Object.entries(res.tests).map(([k,t])=>["ระบบเต็ม "+esc(k),t.only_full,t.only_other,Number(t.holm_p).toFixed(4),Number(t.cohens_h).toFixed(2)]));
+  const ag=res.agents,sc=ag.screener,sd=sc["ScreenAgent (full)"].subtle.accuracy-sc["- memory"].subtle.accuracy;
+  h+=`<h3>ผลของ agent แต่ละตัว</h3><div class="grid g3">${metric("Critic จับข้อผิดพลาดได้",Math.round(ag.critic.catch_rate*100)+"%","false alarm "+Math.round(ag.critic.false_alarm_rate*100)+"%")}
+    ${metric("Screener: ข้อความกำกวม",sc["ScreenAgent (full)"].subtle.accuracy.toFixed(2),(sd>=0?"+":"")+sd.toFixed(2)+" จาก memory")}
+    ${metric("Guard ตรวจพบ injection",Math.round(ag.guard.flag_rate_injected*100)+"%","false positive "+Math.round(ag.guard.flag_rate_clean*100)+"%")}</div>
+    <div style="height:10px"></div>`+table(["tool | decision | เหตุผล","จำนวน"],Object.entries(ag.gate).map(([k,v])=>[esc(k),v]));
+  $("results-out").innerHTML=h;
+}
+
+// ---------- boot
+(async()=>{
+  try{
+    py=await loadPyodide({indexURL:"pyodide/"});
+    $("loadmsg").textContent="กำลังโหลด ScreenAgent…";
+    py.FS.mkdirTree("/app/screenagent");
+    for(const f of FILES){const r=await fetch("screenagent/"+f);
+      if(!r.ok&&f!=="__init__.py")throw new Error("ไม่พบไฟล์ screenagent/"+f);
+      py.FS.writeFile("/app/screenagent/"+f,r.ok?await r.text():"");}  // __init__.py is empty; Jekyll may drop it
+    py.FS.writeFile("/app/bridge.py",await (await fetch("web/bridge.py")).text());
+    py.runPython("import sys; sys.path.insert(0,'/app')");
+    $("loadmsg").textContent="กำลังสร้างชุด abstract…";
+    await new Promise(r=>setTimeout(r,20));
+    B=py.pyimport("bridge");
+    drawHome();loadPool();
+    let res=null;try{const r=await fetch("results/results.json");if(r.ok)res=await r.json();}catch(e){}
+    drawResults(res);
+    $("loading").remove();
+  }catch(e){console.error(e);$("loadmsg").innerHTML="โหลดไม่สำเร็จ: "+esc(e.message)+"<br><span class='muted'>ถ้าเปิดไฟล์ตรงจากเครื่อง (file://) จะไม่ทำงาน ต้องเปิดผ่าน GitHub Pages หรือ <code>python3 -m http.server</code></span>";
+    document.querySelector("#loading .spin").remove();}
+})();
+</script>
+</body>
+</html>

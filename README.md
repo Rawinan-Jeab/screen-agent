@@ -18,6 +18,7 @@ Prototype ของงานวิจัยตัวอย่างในเอ�
 | `screenagent/stats.py` | Wilson CI, McNemar exact, Holm, Cohen's h, sample size แบบ paired | 6.6–6.7 |
 | `run_experiment.py` | รันทุกเงื่อนไข 3 seeds, majority vote, วิเคราะห์, เขียนผลลง `results/` | 6.4–6.8 |
 | `app.py` | หน้า UI แบบ Streamlit | 5 |
+| `index.html`, `web/bridge.py`, `pyodide/` | หน้า UI แบบเว็บนิ่งสำหรับ GitHub Pages (รัน Python ในเบราว์เซอร์ด้วย Pyodide, ใช้ MockLLM) | 5 |
 | `tests/test_agents.py` | unit test 23 ข้อ แยกตาม component | – |
 | `RESULTS.md` | สรุปผลการทดสอบ (ภาษาไทย) | – |
 
@@ -49,6 +50,18 @@ python run_experiment.py --backend ollama --model qwen2.5:7b-instruct           
 ```
 
 ทั้งชุดคือ 300 abstracts × 7 เงื่อนไข × 3 seeds ราว 9,000 การเรียก LLM บน GPU T4 ควรเผื่อเวลาหลายชั่วโมง ให้ pilot ด้วย `--limit` ก่อนเสมอ (เส้นทาง Ollama ทดสอบแล้วกับ stub server เท่านั้น ยังไม่ได้ทดสอบกับ model จริง)
+
+## เปิดบน GitHub Pages (ไม่ต้องใช้ Streamlit)
+
+หน้า `index.html` รัน ScreenAgent ในเบราว์เซอร์ทั้งหมดด้วย [Pyodide](https://pyodide.org) 0.27.7 (Python ที่คอมไพล์เป็น WebAssembly) ไฟล์ของ Pyodide อยู่ในโฟลเดอร์ `pyodide/` แล้ว จึงไม่ต้องพึ่ง server หรือ CDN ภายนอก
+
+1. อัปโหลดไฟล์ทั้งหมดขึ้น repo (รวม `index.html`, `.nojekyll`, `web/` และ `pyodide/`)
+2. ไปที่ **Settings → Pages** ตั้ง Source เป็น **Deploy from a branch** เลือก branch `main` โฟลเดอร์ `/ (root)` แล้วกด Save
+3. รอ 1–2 นาที เว็บจะอยู่ที่ `https://<ชื่อผู้ใช้>.github.io/<ชื่อ repo>/`
+
+ข้อจำกัด: หน้าเว็บใช้ได้เฉพาะ MockLLM เพราะเบราว์เซอร์เรียก Ollama บนเครื่องผู้ใช้ไม่ได้ ถ้าจะใช้ model จริงให้รัน `streamlit run app.py` บนเครื่องตัวเอง ทดสอบบนเครื่องก่อนขึ้น GitHub ได้ด้วย `python3 -m http.server` แล้วเปิด `http://localhost:8000` (เปิดไฟล์ตรงแบบ `file://` จะไม่ทำงาน)
+
+Pyodide ใช้สัญญาอนุญาต MPL-2.0
 
 ## ข้อควรรู้เรื่อง MockLLM
 
